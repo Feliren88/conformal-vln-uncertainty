@@ -1,0 +1,29 @@
+\begin{abstract}
+A robot that follows a spoken route instruction can be confidently wrong,
+and conformal prediction (CP) promises a distribution-free guarantee that
+the correct move sits inside a calibrated prediction set at an
+operator-chosen risk level. On navigation the standard scores break that
+promise. A well-trained policy is sharply overconfident, so the scores pile
+up near zero, the calibrated threshold stops moving with the risk level and
+collapses to uninformative singletons, and pooling the dependent steps of
+one walk voids the guarantee. We restore it with a parameter-free
+normalisation that divides any base score by one plus the policy's own
+residual confidence, calibrated over whole episodes, and we prove in full
+that the correct move stays inside the set at every step of the walk with
+probability at least $1-\alpha$, in finite samples, at every level
+$\alpha$, with exchangeable episodes as the single premise. Across five
+backbones reproduced to within one point of their published success rates,
+the score holds step-averaged coverage above target in all $45$ runs, its
+threshold transfers across a $16.4$-point success-rate spread, and the
+guarantee carries to REVERIE navigation while the grounding head loses
+coverage only to the seen-to-unseen shift, recovered by recalibration.
+Closing the loop, an operator answering the steps the sets flag lifts
+success from $71$ to $91$ percent at a $32$ percent ask rate. The reading
+for deployment is to act on the step-level coverage, recalibrate inside
+each new building, and reach for the cheap score.
+\end{abstract}
+
+\begin{IEEEkeywords}
+vision-language navigation, conformal prediction, uncertainty
+quantification, human-robot interaction, safe autonomy
+\end{IEEEkeywords}

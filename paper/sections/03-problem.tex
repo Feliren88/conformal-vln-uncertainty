@@ -1,0 +1,86 @@
+%==========================================================================
+\section{Problem Formulation}
+\label{sec:problem}
+
+\subsection{VLN as a walk on a graph}
+An episode gives a spoken instruction $L$ and places the agent on a node of
+an undirected navigation graph $G = (V, E)$ whose nodes are panoramic
+viewpoints from Matterport3D~\cite{chang2017matterport}. At step $t$, with history $h_t$, the policy $\pi_\theta$ emits a
+categorical distribution over the admissible action set $\mathcal{A}_t$
+(neighbouring viewpoints and \textsc{stop}),
+\begin{equation}
+p_a \;=\; \pi_\theta(a \mid L, x_t, h_t), \qquad a \in \mathcal{A}_t,
+\label{eq:policy}
+\end{equation}
+and the teacher action $a^*_t$ is a single next node on a shortest path to the
+goal; the coverage event credits only that node, which is conservative when
+several next nodes are equally short. The action-space size $|\mathcal{A}_t|$
+is the number of valid candidates the policy scores at step $t$, that is the
+local graph degree, usually $4$ to $12$; for the global-branch backbone
+(DUET-full) it is the reachable frontier and can be larger. Masked,
+non-existent actions carry probability zero and are excluded from
+$\mathcal{A}_t$ and from every prediction set.
+
+\subsection{Standard nonconformity scores}
+A nonconformity score $s : \mathcal{X}\times\mathcal{A}\to\mathbb{R}_{\geq
+0}$ rates how surprising a candidate is. We use the three standard
+classification scores, the threshold score~\cite{sadinle2019least}
+\begin{equation}
+s_{\mathrm{THR}}(x,a) = 1 - p_a,
+\label{eq:thr}
+\end{equation}
+the adaptive prediction set score~\cite{romano2020aps}, the cumulative mass
+of more-probable candidates,
+\begin{equation}
+s_{\mathrm{APS}}(x,a) = \textstyle\sum_{j : p_j > p_a} p_j,
+\label{eq:aps}
+\end{equation}
+and its rank-regularised variant~\cite{angelopoulos2021raps}
+\begin{equation}
+s_{\mathrm{RAPS}}(x,a) = s_{\mathrm{APS}}(x,a)
+  + \lambda\max\!\big(0, \mathrm{rank}(a) - k_{\mathrm{reg}}\big)
+\label{eq:raps}
+\end{equation}
+with $\lambda = 0.1$ and $k_{\mathrm{reg}} = 2$.
+
+\subsection{Split-conformal calibration}
+Given calibration scores $\{s_i\}_{i=1}^n$, the threshold is the corrected
+empirical quantile
+\begin{equation}
+\hat q(\alpha) = \mathrm{Quantile}\Big(\{s_i\};\,
+\tfrac{\lceil(n+1)(1-\alpha)\rceil}{n}\Big),
+\label{eq:qhat}
+\end{equation}
+and the prediction set at $x$ is $C_\alpha(x) = \{a \in \mathcal{A} :
+s(x,a) \leq \hat q(\alpha)\}$. When the calibration and test units are
+exchangeable this construction covers, $\mathbb{P}(a^* \in C_\alpha(x)) \geq
+1-\alpha$; the quantile argument behind that statement is proved as Step~3 of
+Theorem~\ref{thm:cov} in Section~\ref{sec:guarantee}.
+
+\subsection{The failure mode, overconfidence collapses the score}
+\label{ssec:failure}
+A well-trained navigation policy is sharply peaked. The mean top-action
+probability on R2R val-unseen runs from $0.71$ on DUET-local to
+$0.84$ on RecBERT. The base scores inherit this concentration, most steps
+score near $0$, so the calibrated threshold sits near $0$ and stops
+responding to $\alpha$. Table~\ref{tab:basecp} shows the consequence. On the
+most concentrated backbones, DUET-full and HAMT, the APS and RAPS thresholds
+reach $\hat q = 0$ at $\alpha = 0.30$ and return $100\%$ singletons. The
+mechanism is bare order statistics, so tuning cannot remove it. The threshold
+\eqref{eq:qhat} drops to any value $\epsilon$ as soon as at least
+$\lceil(n+1)(1-\alpha)\rceil$ of the $n$ calibration scores sit at or below
+$\epsilon$, and a concentrated policy puts almost all of its mass there for
+every $\alpha$ above the small tail. APS \eqref{eq:aps} is the extreme
+case. Its top-ranked candidate scores exactly zero, so once at least a $1-\alpha$ fraction of
+calibration steps (plus the finite-sample correction) rank the teacher action
+first, the threshold is exactly $\hat q = 0$ and every set is the bare
+argmax, which is the collapse the bold cells of Table~\ref{tab:basecp}
+record. Where the threshold does not collapse, step coverage still sits below
+nominal, at $0.84$ for $\alpha = 0.10$ on DUET-full THR, the signature of the
+within-episode dependence and seen-to-unseen shift that
+Sections~\ref{ssec:gap} and~\ref{sec:disc} take up.
+
+\input{tables/tab_basecp}
+Columns report the threshold $\hat q$, mean set size $\overline{|C|}$, and
+singleton rate (sgl.). Bold marks the $\hat q = 0$ collapse on the two
+concentrated backbones; the diffuse backbones never reach it.

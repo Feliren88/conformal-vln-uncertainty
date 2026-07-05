@@ -1,0 +1,61 @@
+%==========================================================================
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Vision-and-Language Navigation.}
+R2R~\cite{anderson2018r2r} set the indoor instruction-following task on the
+Matterport3D graph~\cite{chang2017matterport}; later benchmarks widened it to
+multilingual instructions, continuous control, and object-oriented
+goals~\cite{ku2020rxr,krantz2020vlnce,zhu2021soon}, and the agents evolved
+from sequence models~\cite{fried2018speakerfollower,tan2019envdrop} to the
+transformer policies we test~\cite{chen2022duet,chen2021hamt,hong2021vlnbert},
+surveyed in~\cite{zhang2024survey}. A parallel thread gives the agent a sense
+of its own progress, from progress estimation~\cite{ma2019selfmonitoring} to
+asking for help when the instruction leaves out needed
+information~\cite{abraham2025ask}, but these internal signals come with no
+finite-sample statement about how often the correct move is retained, the gap
+a calibrated set is meant to close.
+
+\textbf{Uncertainty without a distribution-free guarantee.}
+Deep classifiers are miscalibrated and
+overconfident~\cite{guo2017calibration}; Bayesian and ensemble methods
+approximate a posterior~\cite{gal2016dropout,lakshminarayanan2017ensembles},
+and classical robotics propagates an explicit probabilistic
+state~\cite{thrun2005probabilistic}. None certifies coverage at a chosen risk
+level in finite samples, the property a help-seeking robot needs before it
+defers to a person.
+
+\textbf{Conformal prediction and its scores.}
+CP turns any score into a set with a finite-sample, distribution-free
+coverage guarantee under
+exchangeability~\cite{vovk2005alrw,lei2018distributionfree,angelopoulos2023gentle}.
+The standard classification scores, THR~\cite{sadinle2019least},
+APS~\cite{romano2020aps}, and RAPS~\cite{angelopoulos2021raps}, were built
+for i.i.d.\ prediction, and scaling a score by an estimate of its local
+difficulty is an old idea in regression
+CP~\cite{papadopoulos2011normalized}. None was designed for a policy whose
+scores concentrate near zero (Section~\ref{ssec:failure}); our normalisation
+is a parameter-free instance of that scaling aimed at the concentration.
+
+\textbf{CP for robot decisions.}
+KnowNo defers to a human when the set grows past a
+singleton~\cite{ren2023knowno}, introspective planning aligns an LLM
+planner's set with task ambiguity~\cite{liang2024introspective}, and CP has
+entered model predictive control~\cite{lindemann2023conformal} and
+multi-agent motion planning~\cite{dixit2023multiagent}. These wrap a standard
+score, taken as given, around a single decision or a low-dimensional
+trajectory; that score is exactly what fails on the concentrated policies of
+sequential navigation, and it is what we redesign.
+
+\textbf{Dependence, graphs, and covariate shift.}
+CP beyond exchangeability prices the loss when units
+depend~\cite{barber2023beyond}, and node-level graph CP conformalises over
+graph nodes~\cite{huang2023graphcp,zargarbashi2023graphcp}; our reduction
+instead makes the walk the exchangeable unit. Under shift, adaptive CP tracks
+the threshold online~\cite{gibbs2021aci} and weighted CP corrects coverage
+when a likelihood ratio is estimable~\cite{tibshirani2019covariateshift},
+both of which we evaluate in Section~\ref{sec:disc}. The compounding of an
+early error along a sequential policy also motivates no-regret imitation
+learning~\cite{ross2011reduction}; our episode-level unit absorbs it
+outright, since Theorem~\ref{thm:cov} never asks the steps of one walk to be
+independent.

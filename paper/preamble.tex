@@ -1,0 +1,40 @@
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+% multirow is only used to group backbone names in tables; fall back to a
+% plain cell if the package is absent so the draft compiles anywhere.
+\IfFileExists{multirow.sty}{\usepackage{multirow}}{}
+\providecommand{\multirow}[3]{#3}
+\usepackage{url}
+\usepackage{bm}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{remark}{Remark}
+
+% FIGURE PLACEHOLDER. Replace each \figph{...}{...} with \includegraphics
+% once artwork exists. #1 = height, #2 = layout description.
+\newcommand{\figph}[2]{%
+  \setlength{\fboxsep}{6pt}%
+  \fcolorbox{black!55}{black!4}{%
+    \begin{minipage}[c][#1][c]{0.94\linewidth}\centering
+    \footnotesize\itshape\color{black!70} #2
+    \end{minipage}}}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\newcommand{\snorm}{s_{\mathrm{norm}}}
+\newcommand{\sbase}{s_{\mathrm{base}}}
+\newcommand{\pmax}{p_{\max}}
+\newcommand{\dtv}{d_{\mathrm{TV}}}

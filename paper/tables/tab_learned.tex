@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Parameter-free versus learned per-step scale $g(x_t)=1+w(x_t)$ (R2R
+DUET-full, THR, $\alpha=0.10$).}
+\label{tab:learned}
+\setlength{\tabcolsep}{4pt}\footnotesize
+\begin{tabular}{lccc}
+\toprule
+Per-step weight $w(x_t)$ & cov & $\overline{|C|}$ & trained? \\
+\midrule
+$w=0$ (no normalisation)              & 0.967 & 4.7 & no \\
+$w=1-\pmax$ (parameter-free)          & 0.968 & 6.8 & no \\
+$w=w_\psi(\phi(x_t))$ (learned MLP)   & 0.974 & 7.6 & \textbf{yes} \\
+\quad learned, without $\alpha$ feature & 0.974 & 7.5 & \textbf{yes} \\
+$w=(1-\pmax)+r_\psi(\phi(x_t))$ (combined) & 0.968 & 7.3 & \textbf{yes} \\
+$w=$ frozen random MLP                & 0.982 & 7.0 & no \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\caption{Zero-Shot Normalised CP on REVERIE val-unseen (navigation head), on
+the two agents with public REVERIE checkpoints; APS matches THR to within
+$0.002$ everywhere and is omitted.}
+\label{tab:reverie}
+\setlength{\tabcolsep}{2.6pt}\scriptsize
+\begin{tabular}{ll ccc c ccc c ccc}
+\toprule
+& & \multicolumn{3}{c}{$\alpha{=}0.10$} & &
+    \multicolumn{3}{c}{$\alpha{=}0.20$} & &
+    \multicolumn{3}{c}{$\alpha{=}0.30$} \\
+\cmidrule{3-5}\cmidrule{7-9}\cmidrule{11-13}
+\textbf{Backb.} & \textbf{Sc.}
+ & cov & $\overline{|C|}$ & sat & & cov & $\overline{|C|}$ & sat
+ & & cov & $\overline{|C|}$ & sat \\
+\midrule
+\multirow{2}{*}{DUET}
+ & THR  & .977 & 8.8 & .90 & & .935 & 8.2 & .79 & & .899 & 7.6 & .70 \\
+ & RAPS & .965 & 7.1 & .50 & & .893 & 5.2 & .20 & & .808 & 4.1 & .09 \\
+\midrule
+\multirow{2}{*}{HAMT}
+ & THR  & .989 & 5.3 & .94 & & .971 & 5.0 & .87 & & .944 & 4.7 & .78 \\
+ & RAPS & .991 & 5.3 & .91 & & .978 & 5.0 & .80 & & .965 & 4.8 & .73 \\
+\bottomrule
+\end{tabular}
+\end{table}

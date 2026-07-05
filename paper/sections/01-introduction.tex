@@ -1,0 +1,89 @@
+%==========================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Vision-and-Language Navigation (VLN) asks an agent to reach a goal described in
+natural language, turning a sentence like ``go past the kitchen and stop at the
+second door on your right'' into a sequence of moves through a real
+building~\cite{anderson2018r2r}. Transformer agents have pushed Room-to-Room
+(R2R) success rates into the $60$ to $75\%$
+range~\cite{chen2022duet,chen2021hamt,hong2021vlnbert,zhang2024survey}, and the
+task now spans high-level instructions, continuous control, and several
+languages~\cite{ku2020rxr,krantz2020vlnce,zhu2021soon}. The headline number
+hides the failure that matters for a robot sharing space with people. When the
+agent misreads an instruction it does not hesitate. It commits to a confidently
+wrong turn with no internal sign that anything went wrong, and the wrong turn
+compounds step by step into a wrong room.
+
+A deployed navigation agent therefore needs to know when it is unsure, so a
+person in the loop can be queried before the mistake
+compounds~\cite{abraham2025ask,ren2023knowno}. The obvious signal, the policy's own softmax, is not trustworthy for this,
+since modern networks are systematically
+overconfident~\cite{guo2017calibration}, and richer estimators, from
+dropout and ensembles to selective
+classification~\cite{gal2016dropout,lakshminarayanan2017ensembles,geifman2017selective}
+and the probabilistic state of classical
+robotics~\cite{thrun2005probabilistic}, certify nothing in finite samples
+about a set the operator can act on at a risk level the operator sets.
+
+Conformal prediction (CP) supplies exactly that certificate, a prediction set
+around any score that contains the correct action with probability at least
+$1-\alpha$, distribution-free and valid in finite
+samples~\cite{vovk2005alrw,angelopoulos2023gentle}. That guarantee has carried
+CP into robot decision-making, from help-seeking
+manipulation~\cite{ren2023knowno} and LLM planner
+alignment~\cite{liang2024introspective} to model predictive control and
+multi-agent motion planning~\cite{lindemann2023conformal,dixit2023multiagent}.
+
+The standard scores run into two problems on navigation. First, the guarantee
+empties out. A well-trained policy is sharply peaked, the mean top-action
+probability on R2R val-unseen runs from $0.71$ to $0.84$ across the backbones
+we test, so the standard classification
+scores~\cite{sadinle2019least,romano2020aps,angelopoulos2021raps} pile up near
+zero, the calibrated threshold stops responding to $\alpha$, and on the most
+concentrated policies it drops to all-singleton sets that carry no uncertainty
+at all (Section~\ref{ssec:failure}). Second, VLN is a walk, so the steps of
+one episode are dependent and are not exchangeable, which breaks the
+assumption plain split CP is built on, and the move from seen buildings to
+unseen ones is a covariate shift that pulls coverage away from
+target~\cite{tibshirani2019covariateshift,barber2023beyond}. The first effect
+we remove by construction, making the walk itself the calibration unit; the
+second we measure rather than assume away.
+
+Our answer is a parameter-free proxy for step difficulty, the policy's own
+residual confidence $1-\pmax$. Dividing any base score by $1+(1-\pmax)$
+rescales it by one positive scalar per step, widening the set where the policy
+is unsure and leaving confident steps alone, without changing the order of
+candidates and without a single trained parameter. Paired with a calibration
+unit defined over the whole episode rather than the step, it restores the
+threshold's response to $\alpha$ at the cost of one subtraction per step, and
+the guarantee it rests on is proved in full immediately after the method.
+
+Coverage alone is not deployment. If covering a hard step forces the set to
+span the aisle and the robot to ask for confirmation every few seconds, the
+warehouse stops moving; safety and throughput pull against each other, and we
+make that trade-off explicit, including a closed loop in which an operator
+answers only the steps the sets flag.
+
+\paragraph*{Contributions}
+\begin{enumerate}
+\item \textbf{A parameter-free conformal score with an episode-level unit}
+(Section~\ref{sec:method}). We divide any base score by $1+(1-\pmax)$ and
+calibrate over an episode-level maximum. It holds no trainable parameters, adds
+no latency, and restores the response to $\alpha$ that the base scores lose to
+overconfidence (Section~\ref{ssec:failure}).
+\item \textbf{A complete proof that coverage holds at every level}
+(Section~\ref{sec:guarantee}). Theorem~\ref{thm:cov} gives exact finite-sample
+simultaneous coverage over the whole walk for every $\alpha$ the operator
+selects, with ties allowed and the steps of an episode free to depend on each
+other arbitrarily; exchangeable episodes are the single premise.
+\item \textbf{Validation across five backbones and two tasks}
+(Section~\ref{sec:exp}). On the agents of DUET~\cite{chen2022duet},
+HAMT~\cite{chen2021hamt}, and Recurrent VLN-BERT~\cite{hong2021vlnbert} with
+three base scores, the normalised score holds step coverage above target in all
+$45$ runs, including the concentrated backbones where the base scores collapse,
+its threshold transfers across a $16.4$-point success-rate spread to within
+$0.019$, a measured total variation of $0.156$ records the seen-to-unseen
+price, and the method carries to REVERIE~\cite{qi2020reverie} on the DUET and
+HAMT agents.
+\end{enumerate}
