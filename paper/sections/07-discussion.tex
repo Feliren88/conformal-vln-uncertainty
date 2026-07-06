@@ -2,18 +2,19 @@
 \section{Discussion}
 \label{sec:disc}
 \textbf{Which coverage to trust.}
-Two coverage numbers come out of the same calibration, and the distinction
-deserves one sharp statement. Theorem~\ref{thm:cov} certifies
+Two coverage numbers come out of the same calibration.
+Theorem~\ref{thm:cov} certifies
 \emph{simultaneous} coverage, and that is exactly the quantity the
 seen-to-unseen move pulls below target ($0.82$ to $0.89$ at $\alpha=0.10$),
 while \emph{step-averaged} coverage is what the runs verify above $1-\alpha$
-(Section~\ref{ssec:gap}). The gap has one door, the exchangeability premise,
-and it obeys an inequality, since whenever the joint laws of calibration and
-test episodes satisfy $\dtv(P,Q)\leq\delta$, simultaneous coverage under $Q$
-is at least $1-\alpha-\delta$. We estimate the shift with a plug-in total
-variation between the two score laws, $\dtv = 0.156$: a $50$-bin histogram of
-the THR teacher score $1-p_{\mathrm{teacher}}$, stable to within $0.01$
-across $40$ to $80$ bins. Because this is a \emph{marginal} of the episode
+(Section~\ref{ssec:gap}). The gap has one door, the exchangeability
+premise, and it obeys an inequality: coverage is one event in the joint
+episode law, so $\dtv(P,Q)\leq\delta$ implies simultaneous coverage under
+$Q$ of at least $1-\alpha-\delta$ (cf.~\cite{barber2023beyond}). We
+estimate the shift with a plug-in total
+variation between the two score laws, $\dtv = 0.156$, a $50$-bin histogram
+of the THR teacher score $1-p_{\mathrm{teacher}}$ that is stable across bin
+counts. Because this is a \emph{marginal} of the episode
 record, it lower-bounds $\delta$, so it certifies that the premise is broken
 rather than that the loss is small; the observed $0.82$ to $0.89$ is
 consistent with the bound at $\delta \geq 0.156$
@@ -21,8 +22,7 @@ consistent with the bound at $\delta \geq 0.156$
 $0.070$, so most of the movement is appearance change rather than branching
 factor. The practical reading is to act on the step-level coverage the runs
 verify and recalibrate inside each new building, which restores the premise
-and the guarantee with it (Remark~\ref{rem:premise}); the transferred
-threshold of Section~\ref{ssec:gap} is a warm start, not a substitute.
+and the guarantee with it (Remark~\ref{rem:premise}).
 
 \textbf{When the set fills the corridor.}
 Rearranging the membership test $\snorm\leq\hat q$ for THR gives a
@@ -39,19 +39,18 @@ operational cost of a divisive form that can only widen; a score that can also
 tighten easy steps is left for future work.
 
 \textbf{One episode, step by step.}
-Figure~\ref{fig:qualitative} walks through one val-unseen episode of the
-DUET-full agent at the deployed threshold ($\hat q = 0.989$, THR,
-$\alpha=0.10$). For two steps the policy is certain and the set is a
+Figure~\ref{fig:qualitative} walks through one val-unseen DUET-full episode
+at the deployed threshold ($\hat q = 0.989$, THR, $\alpha=0.10$). For two steps the policy is certain and the set is a
 singleton; from step~$2$ the instruction stops matching what the agent sees,
 $\pmax$ falls to $0.20$--$0.31$, the top action is wrong on five of the six
-remaining steps, and the set widens until it holds the teacher at every one
-of them. Help is summoned precisely where the policy is about to err, at the
+remaining steps, and the set widens until it holds the teacher at each.
+Help is summoned precisely where the policy is about to err, at the
 cost of a set that spans the whole frontier. The set flags \emph{that} the
 agent is lost, not \emph{which} exits to prefer.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.71\linewidth]{figures/fig_qualitative.png}
+\includegraphics[width=0.63\linewidth]{figures/fig_qualitative.png}
 \caption{A single val-unseen episode (DUET-full, THR, $\alpha=0.10$). Top:
 prediction-set sizes (bars), the action-space size $|\mathcal{A}_t|$
 (staircase), and triangles marking steps where the policy's top action is
@@ -63,42 +62,31 @@ confidence $\pmax$.}
 \textbf{The momentum of an early mistake.}
 An early misread correlates every later step, and under step-pooled
 calibration this dependence is what voids the guarantee. The episode-maximum
-unit dissolves the problem instead of pricing it, because
-Theorem~\ref{thm:cov} lets the steps of one walk depend on each other
-without limit when only whole episodes are compared. Episodes themselves cluster (several instructions per
-path, several paths per building), which exchangeability tolerates under
-symmetric sampling but which shrinks the effective sample behind $n=1021$;
-the scan-cluster intervals of Section~\ref{ssec:main} price this in, and
-exact ties in the episode maxima (fp16 logits) affect at most $2.3\%$ of
-calibration episodes, pushing coverage up, never down.
+unit dissolves the problem instead of pricing it, since
+Theorem~\ref{thm:cov} lets steps depend arbitrarily when only whole
+episodes are compared. Episodes themselves cluster (several instructions
+per path, several paths per building), which shrinks the effective sample
+behind $n=1021$; the scan-cluster intervals of Section~\ref{ssec:main}
+price this in, and exact ties in the episode maxima (fp16 logits) affect at
+most $2.3\%$ of calibration episodes, pushing coverage up, never down.
 
 \textbf{A learned weight works too.}
-The normalisation accepts any strictly positive per-step scale,
-$\snorm(x_t,a)=\sbase(x_t,a)/g(x_t)$ with $g(x_t)=1+w(x_t)$, and
-Theorem~\ref{thm:cov} holds for every \emph{fixed} choice of $g$. The
-parameter-free instance uses the residual confidence $w(x_t)=1-\pmax$, giving
-$g=2-\pmax$. A learned instance uses a strictly positive weight
-$w(x_t)=w_\psi(\phi(x_t))$, where $\phi(x_t)$ stacks the softmax entropy
-$H(p)=-\sum_a p_a\log p_a$, $\pmax$, the top-two margin,
-$\log|\mathcal{A}_t|$, the normalised step index $t/T_{\max}$ (the episode length cap), and $\alpha$,
-and $w_\psi$ is a small MLP fit on a held-out half of calibration, exactly
-what Step~2 of Theorem~\ref{thm:cov} requires of a fitted map
-(Remark~\ref{rem:paramfree}); it is trained to predict the difficulty ratio
-$(1-p_{\mathrm{teacher}})/(1-\pmax)$ on the training half. A third member
-combines the two, $w(x_t)=(1-\pmax)+r_\psi(\phi(x_t))$, the parameter-free
-floor plus a learned non-negative residual under the same split.
-Table~\ref{tab:learned} shows that every member holds the target coverage on
-R2R DUET-full at $\alpha=0.10$; the learned and combined weights do so at
-slightly larger sets and at the cost of a training split and a second forward
-pass, and the combined member matches the parameter-free coverage to three
-decimals, so the learned residual adds little once the confidence floor is
-in place. The feature set is not what carries the effect. With all weights
-calibrated on the same held-out half, learned and parameter-free coverage
-differ by at most $0.009$ on every one of the five backbones and on both
-REVERIE agents, dropping the $\alpha$ feature leaves coverage at $0.974$, and
-even a frozen random MLP stays above target at $0.982$, so \emph{any}
-positive scale restores the response to $\alpha$; what earns $1-\pmax$ its
-place is that it needs no tuning and its threshold transfers
+Table~\ref{tab:learned} evaluates the weight family of
+Section~\ref{ssec:learned} on R2R DUET-full at $\alpha=0.10$. The learned
+member stacks the softmax entropy, $\pmax$, the top-two margin,
+$\log|\mathcal{A}_t|$, the normalised step index, and $\alpha$ into
+$\phi(x_t)$ and trains $w_\psi$ to predict the difficulty ratio
+$(1-p_{\mathrm{teacher}})/(1-\pmax)$ on half of calibration. Every member
+holds the target coverage; the learned and combined weights do so at
+slightly larger sets, and the combined member matches the parameter-free
+coverage to three decimals, so the learned residual adds little once the
+confidence floor is in place. The feature set is not what carries the
+effect. With all weights calibrated on the same held-out half, learned and
+parameter-free coverage differ by at most $0.009$ on every backbone and on
+both REVERIE agents, dropping the $\alpha$ feature leaves coverage at
+$0.974$, and even a frozen random MLP stays above target at $0.982$, so
+\emph{any} positive scale restores the response to $\alpha$; what earns
+$1-\pmax$ its place is that it needs no tuning and its threshold transfers
 (Section~\ref{ssec:gap}). The parameter-free score is the one we carry to
 REVERIE.
 
@@ -116,17 +104,17 @@ above this traces to the confidence law and the threshold rather than to
 action-space size. Second, we conformalise the object-grounding head, a
 single classification per episode under plain split CP. There the same
 normalisation does not restore coverage, because the grounder is both
-concentrated and strongly shifted seen-to-unseen; coverage falls to $0.80$ on DUET and
-$0.90$ on HAMT at $\alpha=0.10$, a drop that sits squarely on the broken
-exchangeability premise while the score stays the same. Calibrating on a
+concentrated and strongly shifted seen-to-unseen; coverage falls to $0.80$
+on DUET and $0.90$ on HAMT at $\alpha=0.10$, a drop that sits on the broken
+exchangeability premise. Calibrating on a
 split of the deployment distribution returns coverage to its target in every
 case we tested (navigation and grounding, DUET and HAMT, R2R and REVERIE),
 which confirms that the drop is covariate shift and that no learned or
 weighted score is needed for validity.
 
-\begin{figure}[t]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=0.71\linewidth]{figures/fig_reverie.png}
+\includegraphics[width=0.63\linewidth]{figures/fig_reverie.png}
 \caption{The REVERIE object-grounding head undercovers at every level under
 the seen-to-unseen shift, which in-distribution recalibration restores;
 navigation coverage on REVERIE clears its target (Table~\ref{tab:reverie}).}
@@ -141,8 +129,8 @@ $0.967$ at $\overline{|C|}=4.7$ on DUET-full, so normalisation buys the
 response to $\alpha$ at the price of larger sets. Coverage by $\pmax$
 quartile, least to most confident, is $1.00$, $1.00$, $0.97$, $0.90$: the
 shortfall sits on the most-confident quartile, where the set is a singleton
-and a confident wrong step is missed. By action-space-size class it is
-$0.96$, $0.97$, $0.97$, close to uniform.
+and a confident wrong step is missed; by action-space-size class it is near
+uniform ($0.96$--$0.97$).
 
 \textbf{Acting on the sets.}
 Figure~\ref{fig:closedloop} closes the loop on DUET-full. A simulated
@@ -152,18 +140,17 @@ steps whose set exceeds $\tau$ converts modest attention into large gains,
 with success rising from $71.2$ to $91.2$ when $32\%$ of steps are answered
 ($\tau=8$) and to $98.0$ at $57\%$ ($\tau=4$). A tuned confidence cutoff is
 slightly stronger at a matched budget on this backbone ($95.0$ at $34\%$),
-consistent with its offline recall of would-be errors ($0.19$ against $0.17$
-at a $10\%$ budget), but the cutoff is an uncalibrated knob on a confidence
+but the cutoff is an uncalibrated knob on a confidence
 scale that shifts from $0.71$ to $0.84$ across our backbones, while the set
 trigger inherits its operating point from $\alpha$ with a coverage
 certificate and a threshold that transfers (Section~\ref{ssec:gap}).
 Because saturated sets tie at the frontier size, the set trigger moves in
-coarse jumps of $\tau$, one more face of the saturation limitation below. The membership test itself costs under
+coarse jumps of $\tau$. The membership test itself costs under
 $0.1$ ms per step on CPU, so the loop adds no perceptible latency.
 
-\begin{figure}[t]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=0.71\linewidth]{figures/fig_closedloop.png}
+\includegraphics[width=0.63\linewidth]{figures/fig_closedloop.png}
 \caption{Closing the loop (DUET-full, val-unseen, THR, $\alpha=0.10$). A
 simulated operator answers a step when the trigger fires; success rate is
 plotted against the fraction of steps answered, for the prediction-set
@@ -177,11 +164,11 @@ Three canonical alternatives, run on the same rollouts, locate the method.
 adaptive scores, because a temperature preserves ranks and the top-ranked
 APS score is exactly zero at any temperature, so whenever the calibration teacher sits
 at rank one more often than $1-\alpha$, the collapse $\hat q=0$ survives the
-best-fit temperature ($T$ between $2.1$ and $7.1$; DUET-full and HAMT still
+best-fit temperature (DUET-full and HAMT still
 return $100\%$ singletons at $\alpha=0.30$). \emph{Weighted CP} with a
 logistic-regression density ratio over episode covariates targets the
 simultaneous coverage the shift destroys and partially recovers it (HAMT
-$0.83\to0.91$ at $\alpha=0.10$; between $0.83$ and $0.93$ across conditions),
+$0.83\to0.91$ at $\alpha=0.10$),
 at the price of an estimated ratio and a reduced effective sample.
 \emph{Mondrian calibration} by action-space class shrinks sets sharply
 ($1.1$ against $2.7$ on the small-degree class of DUET-full) but its
@@ -197,19 +184,18 @@ the whole small action space (saturation up to $83\%$ at $\alpha = 0.10$ on
 R2R and up to $94\%$ on REVERIE) and carry little resolution there. On the
 object-grounding head the shift requires in-distribution recalibration to
 keep the guarantee. The closed loop of Figure~\ref{fig:closedloop} simulates
-the operator with the shortest-path teacher; a study with human operators is
+the operator with the shortest-path teacher; a human-operator study is
 future work.
 
 \textbf{Beyond the discrete graph.}
-Everything here lives on the discrete panoramic action space of
-Matterport3D, where the navigation graph supplies the finite candidate set
-that CP thresholds at every step. Continuous instruction following, whether
-in VLN-CE~\cite{krantz2020vlnce} or under velocity- and waypoint-level
-control on a real platform, removes that finite set, and with it the direct
-applicability of every classification score in this paper. The episode-maximum reduction, however, does not care how the step is
-represented. Any fixed per-step score, including a conformal
+Everything here lives on Matterport3D's discrete panoramic action space,
+whose graph supplies the finite candidate set CP thresholds at every
+step. Continuous instruction following, in
+VLN-CE~\cite{krantz2020vlnce} or under velocity- or waypoint-level control
+on a real platform, removes that finite set and with it every
+classification score in this paper. The episode-maximum reduction, however,
+does not care how the step is represented. Any fixed per-step score, including a conformal
 \emph{regression} interval over a proposed waypoint or heading, reduces to
 one exchangeable scalar per episode, and Theorem~\ref{thm:cov} applies
 unchanged. Carrying the confidence-normalised family to waypoint heads in
-continuous environments is, we believe, the most promising direction this
-work opens.
+continuous environments is the most promising direction this work opens.

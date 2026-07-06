@@ -12,9 +12,9 @@ transformer policies we test~\cite{chen2022duet,chen2021hamt,hong2021vlnbert},
 surveyed in~\cite{zhang2024survey}. A parallel thread gives the agent a sense
 of its own progress, from progress estimation~\cite{ma2019selfmonitoring} to
 asking for help when the instruction leaves out needed
-information~\cite{abraham2025ask}, but these internal signals come with no
-finite-sample statement about how often the correct move is retained, the gap
-a calibrated set is meant to close.
+information~\cite{abraham2025ask}, but these internal signals carry no
+finite-sample statement about how often the correct move is retained, the
+gap a calibrated set closes.
 
 \textbf{Uncertainty without a distribution-free guarantee.}
 Deep classifiers are miscalibrated and
@@ -57,5 +57,4 @@ when a likelihood ratio is estimable~\cite{tibshirani2019covariateshift},
 both of which we evaluate in Section~\ref{sec:disc}. The compounding of an
 early error along a sequential policy also motivates no-regret imitation
 learning~\cite{ross2011reduction}; our episode-level unit absorbs it
-outright, since Theorem~\ref{thm:cov} never asks the steps of one walk to be
-independent.
+outright.

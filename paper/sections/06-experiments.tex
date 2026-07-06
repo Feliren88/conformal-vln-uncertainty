@@ -10,9 +10,9 @@ and local action-space settings of DUET~\cite{chen2022duet} (DUET-full and
 DUET-local), HAMT~\cite{chen2021hamt}, and Recurrent VLN-BERT under its OSCAR
 and PREVALENT initialisations~\cite{hong2021vlnbert}. Each reproduces its
 published val-unseen SR to within one point ($71.2$ against $72$, $66.2$
-against $66$, $62.8$ against $63$, $58.7$ against $59$). Prediction sets are
-recorded and never override the policy, so every run reproduces its baseline
-SR exactly. All results use the parameter-free score~\eqref{eq:snorm}.
+against $66$, $62.8$ against $63$, $58.7$ against $59$), and prediction sets
+are recorded without overriding the policy, so every run keeps its baseline
+SR. All results use the parameter-free score~\eqref{eq:snorm}.
 
 \subsection{Restored $\alpha$-sensitivity and coverage}
 \label{ssec:main}
@@ -30,8 +30,8 @@ in absolute terms, with a mean of $4$ to $7$ at $\alpha = 0.10$, and they
 track the action-space degree, largest on DUET-full ($6.8$, whose global
 branch decides over the reachable frontier) and near $4$ to $5$ on the
 small-action backbones. RAPS keeps zero singletons at $\alpha = 0.10$ and
-gives sizes close to THR (for example $5.5$ against $6.8$ on DUET-full); on
-the small action spaces there is little tail for its rank penalty to cut.
+gives sizes close to THR; on the small action spaces there is little tail
+for its rank penalty to cut.
 
 \input{tables/tab_main}
 In the table, cov is step-averaged empirical coverage, $\overline{|C|}$
@@ -44,15 +44,14 @@ The simultaneous coverage of Theorem~\ref{thm:cov} (also called
 whole-trajectory coverage, the probability that every step of an episode is
 covered) falls below $1-\alpha$ under the seen-to-unseen shift. At
 $\alpha = 0.10$ it ranges from $0.82$ to $0.89$ across backbones, against the
-step-averaged $0.95$ to $0.98$. This is the premise of
-Theorem~\ref{thm:cov} at work in reverse. Calibration episodes come from seen
+step-averaged $0.95$ to $0.98$. Calibration episodes come from seen
 buildings and test episodes from unseen ones, so Assumption~\ref{asm:exch}
 fails across that boundary (Remark~\ref{rem:premise}), and the measured
 total-variation distance $\dtv = 0.156$ between the two score laws
 (Section~\ref{sec:disc}) records how far it fails.
 
-The THR threshold transfers, and we test it directly rather than reading it
-off numeric closeness. Applying the threshold calibrated on each backbone to
+The THR threshold transfers, and we test it directly.
+Applying the threshold calibrated on each backbone to
 every other backbone's test split ($20$ cross pairs, THR, $\alpha=0.10$)
 holds step coverage between $0.887$ and $1.000$, within $0.013$ of target in
 the worst pair, because dividing by $2-\pmax$ maps each backbone onto a

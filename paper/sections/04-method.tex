@@ -2,14 +2,28 @@
 \section{Method: Zero-Shot Normalised CP}
 \label{sec:method}
 The method has three deterministic phases, a confidence-adjusted score, an
-episode-level calibration unit, and a deployed threshold. It holds no
-trainable parameters and adds no latency.
+episode-level calibration unit, and a deployed threshold
+(Figure~\ref{fig:pipeline}). It holds no trainable parameters and adds no
+latency.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/fig_pipeline.png}
+\caption{Overview of the pipeline. \emph{Calibration (offline):} per-step
+scores are normalised as $\snorm=\sbase/(1+w(x_t))$ with the parameter-free
+weight $w=1-\pmax$ or a learned $w_\psi(\phi(x_t))$
+(Section~\ref{ssec:learned}); each episode reduces to its maximum score,
+whose corrected quantile gives $\hat q(\alpha)$. \emph{Deployment:} the set
+\eqref{eq:set} widens where the policy is uncertain, flagging the step for
+a human query.}
+\label{fig:pipeline}
+\end{figure*}
 
 \subsection{The confidence-adjusted nonconformity score}
 \label{ssec:score}
 To counter the concentration of Section~\ref{ssec:failure} we rescale any
 base score $\sbase \in \{s_{\mathrm{THR}}, s_{\mathrm{APS}},
-s_{\mathrm{RAPS}}\} of \eqref{eq:thr}--\eqref{eq:raps}$ by a parameter-free proxy read straight off the policy
+s_{\mathrm{RAPS}}\}$ of \eqref{eq:thr}--\eqref{eq:raps} by a parameter-free proxy read straight off the policy
 confidence $\pmax = \max_a \pi_\theta(a\mid L, x_t, h_t)$,
 \begin{equation}
 \snorm(x_t, a) \;=\; \frac{\sbase(x_t, a)}{1 + \big(1 - \pmax\big)}
@@ -25,9 +39,8 @@ shrinks, more candidates pass the threshold, and the set widens where the
 robot is confused. The membership test $\snorm(x,a) \leq \hat q$ rewrites
 to $\sbase(x,a) \leq \hat q\,(2 - \pmax)$, a base score read against a
 confidence-adaptive threshold, and evaluating it costs one subtraction per
-step. The set ranges over the valid candidates of $\mathcal{A}_t$, so a masked
-action with $p_a = 0$ is never included, and $|\mathcal{A}_t|$ in what follows
-is the number of valid candidates.
+step. The set ranges over the valid candidates of $\mathcal{A}_t$
+(Section~\ref{sec:problem}), so a masked action is never included.
 
 \subsection{Episode-maximum calibration unit}
 \label{ssec:epmax}
@@ -64,7 +77,15 @@ with the $\arg\max$ action as fallback when the set is empty. There is no
 training loop, and Section~\ref{sec:disc} closes the loop by querying an
 operator when the set grows.
 
-
-Section~\ref{sec:guarantee}, next, states and proves the exact finite-sample
-guarantee this pipeline satisfies, at every level $\alpha$, with the full
-calibration set behind the quantile because the score holds nothing to fit.
+\subsection{Learned and hybrid weights}
+\label{ssec:learned}
+The score \eqref{eq:snorm} is one member of a family
+$\snorm=\sbase/(1+w(x_t))$, and the guarantee of
+Section~\ref{sec:guarantee} holds for every weight fixed before
+calibration. Besides the parameter-free $w=1-\pmax$, a learning-based
+member sets $w=w_\psi(\phi(x_t))$, a small MLP over softmax statistics fit
+on half of the calibration episodes, and a hybrid adds a learned
+non-negative residual to the parameter-free floor. Both preserve the
+theorem at the cost of a train--calibrate split and a second forward pass
+(Remark~\ref{rem:paramfree}), and both match the parameter-free coverage
+(Section~\ref{sec:disc}).

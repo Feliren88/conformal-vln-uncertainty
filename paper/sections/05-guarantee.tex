@@ -2,12 +2,12 @@
 \section{The Coverage Guarantee}
 \label{sec:guarantee}
 Everything the pipeline promises rests on one theorem, stated and proved in
-full. The quantile argument in Step~3 is the classical split-conformal
-one~\cite{vovk2005alrw,lei2018distributionfree,angelopoulos2023gentle}, in the
-tie-robust counting form of~\cite{tibshirani2019covariateshift}; what is
-specific to this paper is the object it is applied to, the episode maximum of
-a parameter-free score, which makes the walk the exchangeable unit at zero
-data cost.
+full. The quantile step is the classical split-conformal
+argument~\cite{vovk2005alrw,lei2018distributionfree,angelopoulos2023gentle},
+taken in the tie-robust counting form of
+\cite[Lemma~1]{tibshirani2019covariateshift}; what is new is the object it
+is applied to, the episode maximum of a parameter-free score, which makes
+the walk the exchangeable unit.
 
 \textit{Setting.}
 An episode record $E$ collects everything one rollout of the fixed policy
@@ -71,8 +71,10 @@ every permutation $\pi$ of $\{1,\dots,n+1\}$,
 &=\big(\varphi(E_{\pi(1)}),\dots,\varphi(E_{\pi(n+1)})\big)\\
 &\overset{d}{=}(Z_1,\dots,Z_{n+1})
 \end{align*}
-by Assumption~\ref{asm:exch}. Hence $Z_1,\dots,Z_{n+1}$ are exchangeable. This
-is the step a fitted score breaks (Remark~\ref{rem:paramfree}).
+by Assumption~\ref{asm:exch}. Hence $Z_1,\dots,Z_{n+1}$ are exchangeable:
+exchangeability is closed under a fixed measurable map applied
+coordinatewise (see, e.g.,~\cite{kallenberg2005symmetries}). This is the
+step a fitted score breaks (Remark~\ref{rem:paramfree}).
 
 \emph{Step 3 (the quantile bound, ties allowed).}
 If $k>n$, which happens only when $\alpha<\tfrac{1}{n+1}$, then
@@ -83,12 +85,11 @@ values $Z_1,\dots,Z_{n+1}$. Two facts finish the proof.
 (i) \emph{Deterministically, $Z_{n+1}\leq q^\star$ implies
 $Z_{n+1}\leq\hat q$.} Sort the $n+1$ values as
 $v_{(1)}\leq\dots\leq v_{(n+1)}$, so $q^\star=v_{(k)}$. If
-$Z_{n+1}\leq v_{(k)}$, then $Z_{n+1}$ occupies some sorted position
-$p\leq k$; indeed, if every position carrying the value $Z_{n+1}$ exceeded
-$k$, the sorted order would force $v_{(k)}<Z_{n+1}$, a contradiction.
-Removing the value at position $p\leq k$ leaves $n$ values whose $k$-th
-smallest is $v_{(k+1)}\geq v_{(k)}\geq Z_{n+1}$. Those $n$ values are exactly
-the calibration scores, so $\hat q\geq Z_{n+1}$.
+$Z_{n+1}\leq v_{(k)}$, some position $p\leq k$ carries the value $Z_{n+1}$,
+for otherwise every copy of $Z_{n+1}$ would sit above position $k$ and
+force $v_{(k)}<Z_{n+1}$. Removing the entry at position $p$ leaves, as a
+multiset, exactly the $n$ calibration scores, whose $k$-th smallest is
+$v_{(k+1)}\geq v_{(k)}\geq Z_{n+1}$; that $k$-th smallest is $\hat q$.
 
 (ii) \emph{By exchangeability, $\mathbb{P}(Z_{n+1}\leq q^\star)\geq
 k/(n+1)$.} The threshold $q^\star$ is a symmetric function of
@@ -111,29 +112,43 @@ Combining (i), (ii), and \eqref{eq:event},
 
 \end{proof}
 
-Nothing in the proof touches the distribution of the scores, so
-\eqref{eq:thm-cov} holds separately at every $\alpha\in(0,1)$, including on
-score laws with heavy atoms, which push coverage above target, never below;
-when the reduced scores are almost surely distinct, the standard rank
-argument gives the matching upper bound $1-\alpha+\tfrac{1}{n+1}$. Since $k$
-is nonincreasing in $\alpha$ the sets nest, so raising the tolerated risk can
-only shrink the set the robot acts on.
+The guarantee is marginal, over the joint draw of calibration and test
+episodes, which is the standard form of split-conformal
+validity~\cite{lei2018distributionfree}; no statement is made conditionally
+on one realised calibration set. Nothing in the proof touches the law of
+the scores either, so \eqref{eq:thm-cov} holds separately at every
+$\alpha\in(0,1)$, atoms push coverage above target, never below, and when
+the $\tilde s_i$ are almost surely distinct the same rank count returns the
+matching upper bound
+$1-\alpha+\tfrac{1}{n+1}$~\cite{vovk2005alrw,lei2018distributionfree,tibshirani2019covariateshift}.
+Since $k$ is nonincreasing in $\alpha$ the sets nest, so raising the
+tolerated risk can only shrink the set the robot acts on. No union bound is
+paid: per-step Bonferroni calibration at level $\alpha/T_{\max}$, the
+standard device for multi-horizon conformal
+forecasting~\cite{stankeviciute2021cfrnn}, is valid under the same premise
+but conservative and tied to a horizon cap fixed in advance, while the
+maximum reduction prices the whole variable-length walk at one level
+$\alpha$.
 
 \begin{remark}[What the premise excludes]
 \label{rem:premise}
-Assumption~\ref{asm:exch} is the one door through which deployment can break
-\eqref{eq:thm-cov}. What it does not cover is a change of law between
-calibration and test. Seen-building and unseen-building walks are not
+Assumption~\ref{asm:exch} is the one door through which deployment can
+break \eqref{eq:thm-cov}: a change of law between calibration and
+test. Seen-building and unseen-building walks are not
 exchangeable, and Section~\ref{ssec:gap} measures what that costs rather than
 assuming it away. Recalibrating on episodes from the deployment distribution
-restores the premise and the guarantee with it.
+restores the premise and the guarantee with it. The premise likewise fixes
+the rollout law, so a deployment in which an operator overrides flagged
+steps changes that law and calls for recalibration under the assisted
+policy.
 \end{remark}
 
 \begin{remark}[Why parameter-freeness pays]
 \label{rem:paramfree}
 Step~2 is where a learned score must spend data, since fitting on a split
-disjoint from the quantile's episodes preserves the theorem at roughly half
-the calibration set and a second forward pass. The parameter-free instance skips
-the split, so all $n=1021$ episodes stand behind \eqref{eq:qhat-ep}, and the
-theorem applies to any fixed per-step scale (Section~\ref{sec:disc}).
+disjoint from the quantile's episodes preserves the theorem at the price of
+roughly half the calibration set and a second forward pass. The
+parameter-free instance skips the split, so all $n=1021$ episodes stand
+behind \eqref{eq:qhat-ep}, and the theorem applies to any fixed per-step
+scale (Section~\ref{ssec:learned}).
 \end{remark}
